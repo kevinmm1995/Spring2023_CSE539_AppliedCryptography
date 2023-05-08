@@ -1,0 +1,47 @@
+﻿// CSE 566 Project 1 Cryptanalysis//
+#pragma warning disable
+using System.Security.Cryptography;
+
+DateTime dt = new DateTime(2020,7,3,11,0,0);
+TimeSpan ts = dt.Subtract(new DateTime(1970, 1, 1));
+int timevalue = (int)ts.TotalMinutes;
+
+string secretString = args[0]; // PlainText input//
+string encryString = args[1]; // Encryptedtext input//
+
+int i;
+
+
+Random rng = new Random((int)timevalue); // Generate random value from ts//
+byte[] key = BitConverter.GetBytes(rng.NextDouble()); // key for DES//
+
+for (i = 0;i<=1440;i++) // 1440 = minutes in a day
+{
+    rng = new Random((int)timevalue);
+    key = BitConverter.GetBytes(rng.NextDouble());
+    if (encryString == Encrypt(key,secretString)) // checking if provided encrypted text matches calculated encrypted text//
+    {
+        Console.WriteLine(timevalue); // print seedd//
+        break;
+    }
+    else 
+    {
+        timevalue = timevalue + 1;  // iterate until entire day is complete//
+    }
+}
+
+
+
+
+static string Encrypt(byte[] key, string secretString) // provided//
+{
+    DESCryptoServiceProvider csp = new DESCryptoServiceProvider();
+    MemoryStream ms = new MemoryStream();
+    CryptoStream cs = new CryptoStream(ms, csp.CreateEncryptor(key, key), CryptoStreamMode.Write);
+    StreamWriter sw = new StreamWriter(cs);
+    sw.Write(secretString);
+    sw.Flush();
+    cs.FlushFinalBlock();
+    sw.Flush();
+    return Convert.ToBase64String(ms.GetBuffer(), 0, (int)ms.Length);
+}
